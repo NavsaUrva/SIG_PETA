@@ -105,13 +105,10 @@ let userCircle = null;
 --------------------------- */
 function colorForKategori(k) {
   const key = norm(k);
-  if (key.includes("alam")) return "#4ee1c1";
-  if (key.includes("budaya")) return "#7aa2ff";
-  if (key.includes("kuliner")) return "#ffb86b";
-  if (key.includes("edukasi")) return "#c3a6ff";
-  if (key.includes("buatan")) return "#ff6b9a";
-  if (key.includes("rekreasi")) return "#ffd166";
-  if (key.includes("umum")) return "#9aa7c7";
+  if (key.includes("alam")) return "#246028ff";
+  if (key.includes("budaya")) return "#004cffff";
+  if (key.includes("rekreasi")) return "#fffb00ff";
+  if (key.includes("umum")) return "#ff0000ff";
   return "#9aa7c7";
 }
 
