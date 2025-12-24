@@ -24,6 +24,10 @@ function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
+function isMobile() {
+  return window.matchMedia("(max-width: 980px)").matches;
+}
+
 /* ---------------------------
    DOM
 --------------------------- */
@@ -101,23 +105,18 @@ let userCircle = null;
 --------------------------- */
 function colorForKategori(k) {
   const key = norm(k);
-
-  if (key.includes("alam")) return "#1a804aff";
-  if (key.includes("budaya")) return "#fd01b5ff";
+  if (key.includes("alam")) return "#4ee1c1";
+  if (key.includes("budaya")) return "#7aa2ff";
   if (key.includes("kuliner")) return "#ffb86b";
   if (key.includes("edukasi")) return "#c3a6ff";
   if (key.includes("buatan")) return "#ff6b9a";
-
-  if (key.includes("rekreasi")) return "#ffb300ff"; // warna khusus rekreasi
-  if (key.includes("umum")) return "#0048fdff";     // umum
-
+  if (key.includes("rekreasi")) return "#ffd166";
+  if (key.includes("umum")) return "#9aa7c7";
   return "#9aa7c7";
 }
 
-
 function iconForKategori(k) {
   const c = colorForKategori(k);
-  // DivIcon sederhana: bulat + border
   return L.divIcon({
     className: "custom-pin",
     html: `<div style="
@@ -130,6 +129,35 @@ function iconForKategori(k) {
     iconAnchor: [7, 7],
   });
 }
+
+/* ---------------------------
+   Legend (Bottom Right) - AUTO dari data
+--------------------------- */
+const legend = L.control({ position: "bottomright" });
+legend.onAdd = function () {
+  const div = L.DomUtil.create("div", "map-legend");
+
+  const kategoriLegend = [...new Set(all.map((w) => w.kategori).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "id"));
+
+  div.innerHTML = `
+    <div class="legend-title">Legenda Kategori</div>
+    ${kategoriLegend
+      .map((k) => `
+        <div class="legend-row">
+          <span class="legend-swatch" style="background:${colorForKategori(k)}"></span>
+          <span>${escapeHtml(k)}</span>
+        </div>
+      `)
+      .join("")}
+    <div class="legend-note">Warna marker mengikuti kategori data wisata.</div>
+  `;
+
+  L.DomEvent.disableClickPropagation(div);
+  L.DomEvent.disableScrollPropagation(div);
+  return div;
+};
+legend.addTo(map);
 
 /* ---------------------------
    Filtering + Rendering
@@ -154,7 +182,6 @@ function applyFilters() {
     return hay.includes(q);
   });
 
-  // Sorting
   if (sort === "rating_desc") {
     arr.sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1));
   } else if (sort === "rating_asc") {
@@ -164,7 +191,6 @@ function applyFilters() {
   } else if (sort === "nama_desc") {
     arr.sort((a, b) => b.nama.localeCompare(a.nama, "id"));
   } else {
-    // relevansi: jika ada query, yang match nama dulu
     if (q) {
       arr.sort((a, b) => {
         const an = norm(a.nama).includes(q) ? 0 : 1;
@@ -173,20 +199,18 @@ function applyFilters() {
         return (b.rating ?? -1) - (a.rating ?? -1);
       });
     } else {
-      // default: rating desc
       arr.sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1));
     }
   }
 
-  // limit
-  if (Number.isFinite(limit) && limit > 0) {
-    arr = arr.slice(0, limit);
-  }
+  if (Number.isFinite(limit) && limit > 0) arr = arr.slice(0, limit);
 
   current = arr;
 
   elCountShown.textContent = String(current.length);
-  elStatus.textContent = q ? `Filter aktif: "${elQ.value}"` : (kat !== "ALL" ? `Kategori: ${kat}` : "");
+  elStatus.textContent = q
+    ? `Filter aktif: "${elQ.value}"`
+    : (kat !== "ALL" ? `Kategori: ${kat}` : "");
 
   renderList();
   renderMarkers();
@@ -194,6 +218,7 @@ function applyFilters() {
 
 function renderList() {
   elList.innerHTML = "";
+
   if (current.length === 0) {
     const empty = document.createElement("div");
     empty.className = "item";
@@ -277,19 +302,17 @@ function focusItem(id) {
   map.setView([w.latitude, w.longitude], clamp(map.getZoom() + 1, 12, 17), { animate: true });
   m.openPopup();
 
-  // highlight card scroll into view
   const card = elList.querySelector(`.item[data-id="${id}"]`);
   if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
 
-  // auto close sidebar on mobile after selection (biar enak)
-  if (window.matchMedia("(max-width: 980px)").matches) {
-    elSidebar.classList.add("is-hidden");
+  if (isMobile()) {
+    elSidebar.classList.remove("is-open");
+    setTimeout(() => map.invalidateSize(), 260);
   }
 }
 
 function fitToCurrent() {
   if (current.length === 0) return;
-
   const latlngs = current.map((w) => [w.latitude, w.longitude]);
   const bounds = L.latLngBounds(latlngs);
   map.fitBounds(bounds.pad(0.15));
@@ -298,9 +321,17 @@ function fitToCurrent() {
 /* ---------------------------
    UI events
 --------------------------- */
-elToggle.addEventListener("click", () => {
-  elSidebar.classList.toggle("is-hidden");
-});
+function toggleSidebar() {
+  if (isMobile()) {
+    elSidebar.classList.toggle("is-open");
+    setTimeout(() => map.invalidateSize(), 260);
+  } else {
+    elSidebar.classList.toggle("is-hidden");
+    setTimeout(() => map.invalidateSize(), 260);
+  }
+}
+
+elToggle.addEventListener("click", toggleSidebar);
 
 elFit.addEventListener("click", () => {
   fitToCurrent();
@@ -372,40 +403,13 @@ elLocate.addEventListener("click", () => {
 applyFilters();
 fitToCurrent();
 
-/* On load on mobile: hide sidebar initially for map-first experience */
-if (window.matchMedia("(max-width: 980px)").matches) {
-  elSidebar.classList.add("is-hidden");
+/* default mobile: panel tertutup */
+if (isMobile()) {
+  elSidebar.classList.remove("is-hidden");
+  elSidebar.classList.remove("is-open");
 }
 
-/* ---------------------------
-   Legend (Bottom Right) - AUTO dari data
---------------------------- */
-const legend = L.control({ position: "bottomright" });
-
-legend.onAdd = function () {
-  const div = L.DomUtil.create("div", "map-legend");
-
-  // Ambil kategori asli dari dataset (sama seperti dropdown)
-  const kategoriLegend = [...new Set(all.map((w) => w.kategori).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b, "id"));
-
-  div.innerHTML = `
-    <div class="legend-title">Legenda Kategori</div>
-    ${kategoriLegend
-      .map((k) => `
-        <div class="legend-row">
-          <span class="legend-swatch" style="background:${colorForKategori(k)}"></span>
-          <span>${escapeHtml(k)}</span>
-        </div>
-      `)
-      .join("")}
-    <div class="legend-note">Warna marker mengikuti kategori data wisata.</div>
-  `;
-
-  L.DomEvent.disableClickPropagation(div);
-  L.DomEvent.disableScrollPropagation(div);
-  return div;
-};
-
-legend.addTo(map);
-
+/* Leaflet refresh size on resize/orientation */
+window.addEventListener("resize", () => {
+  map.invalidateSize();
+});

@@ -1,127 +1,134 @@
 <!doctype html>
 <html lang="id">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Web GIS Wisata Bogor (Leaflet)</title>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Web GIS Wisata Bogor</title>
 
-    <!-- Leaflet CSS -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
 
-    <link rel="stylesheet" href="./style.css" />
-  </head>
+  <!-- App CSS -->
+  <link rel="stylesheet" href="./style.css" />
+</head>
 
-  <body>
-    <header class="topbar">
-      <div class="topbar__left">
-        <button id="btnToggleSidebar" class="icon-btn" aria-label="Buka/Tutup panel">
-          ☰
-        </button>
-        <div class="brand">
-          <div class="brand__title">Web GIS Wisata Bogor</div>
-          <div class="brand__subtitle">Search • Filter • Marker • Responsive</div>
+<body>
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar__left">
+      <button id="btnToggleSidebar" class="icon-btn" aria-label="Buka/Tutup panel">☰</button>
+      <div class="brand">
+        <div class="brand__title">Web GIS Wisata Bogor</div>
+        <div class="brand__subtitle">Search • Filter • Marker • Responsive</div>
+      </div>
+    </div>
+
+    <div class="topbar__right">
+      <button id="btnFit" class="btn">Fit to Data</button>
+      <button id="btnLocate" class="btn btn--ghost">Lokasi Saya</button>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <main class="layout">
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar" aria-label="Panel filter dan hasil">
+      <!-- FILTER PANEL -->
+      <section class="panel">
+        <div class="panel__section">
+          <label class="label" for="q">Cari (nama/kecamatan/wilayah)</label>
+          <input
+            id="q"
+            class="input"
+            type="text"
+            placeholder="contoh: Curug, Cisarua, Kota Bogor"
+            autocomplete="off"
+          />
         </div>
-      </div>
 
-      <div class="topbar__right">
-        <button id="btnFit" class="btn">Fit to Data</button>
-        <button id="btnLocate" class="btn btn--ghost">Lokasi Saya</button>
-      </div>
-    </header>
-
-    <main class="layout">
-      <aside id="sidebar" class="sidebar">
-        <div class="panel">
+        <div class="panel__grid">
           <div class="panel__section">
-            <label class="label" for="q">Cari (nama/kecamatan/wilayah)</label>
-            <input id="q" class="input" type="search" placeholder="contoh: Curug, Cisarua, Kota Bogor" />
+            <label class="label" for="kategori">Kategori</label>
+            <select id="kategori" class="select">
+              <option value="ALL">Semua</option>
+              <!-- opsi kategori otomatis dari script.js -->
+            </select>
           </div>
 
-          <div class="panel__grid">
-            <div class="panel__section">
-              <label class="label" for="kategori">Kategori</label>
-              <select id="kategori" class="select">
-                <option value="ALL">Semua</option>
-              </select>
-            </div>
-
-            <div class="panel__section">
-              <label class="label" for="sort">Urutkan</label>
-              <select id="sort" class="select">
-                <option value="relevansi">Relevansi</option>
-                <option value="rating_desc">Rating tertinggi</option>
-                <option value="rating_asc">Rating terendah</option>
-                <option value="nama_asc">Nama A–Z</option>
-                <option value="nama_desc">Nama Z–A</option>
-              </select>
-            </div>
+          <div class="panel__section">
+            <label class="label" for="sort">Urutkan</label>
+            <select id="sort" class="select">
+              <option value="relevansi">Relevansi</option>
+              <option value="rating_desc">Rating (Tertinggi)</option>
+              <option value="rating_asc">Rating (Terendah)</option>
+              <option value="nama_asc">Nama (A → Z)</option>
+              <option value="nama_desc">Nama (Z → A)</option>
+            </select>
           </div>
 
-          <div class="panel__grid">
-            <div class="panel__section">
-              <label class="label" for="minRating">Min rating</label>
-              <select id="minRating" class="select">
-                <option value="0">0+</option>
-                <option value="3">3+</option>
-                <option value="3.5">3.5+</option>
-                <option value="4">4+</option>
-                <option value="4.5">4.5+</option>
-              </select>
-            </div>
-
-            <div class="panel__section">
-              <label class="label" for="limit">Tampilkan</label>
-              <select id="limit" class="select">
-                <option value="100">100</option>
-                <option value="250">250</option>
-                <option value="500">500</option>
-                <option value="1000">1000</option>
-                <option value="5000">Semua</option>
-              </select>
-            </div>
+          <div class="panel__section">
+            <label class="label" for="minRating">Min rating</label>
+            <select id="minRating" class="select">
+              <option value="0">0+</option>
+              <option value="3">3+</option>
+              <option value="3.5">3.5+</option>
+              <option value="4">4+</option>
+              <option value="4.5">4.5+</option>
+            </select>
           </div>
 
-          <div class="panel__actions">
-            <button id="btnReset" class="btn btn--ghost">Reset</button>
-            <div class="meta">
-              <div><span id="countShown">0</span> / <span id="countAll">0</span> data</div>
-              <div id="statusText" class="muted"></div>
-            </div>
+          <div class="panel__section">
+            <label class="label" for="limit">Tampilkan</label>
+            <select id="limit" class="select">
+              <option value="50">50</option>
+              <option value="100" selected>100</option>
+              <option value="200">200</option>
+              <option value="500">500</option>
+              <option value="1000">1000</option>
+            </select>
           </div>
         </div>
 
-        <div class="results">
-          <div class="results__header">
-            <div class="results__title">Hasil</div>
-            <div class="results__hint muted">Klik item untuk zoom</div>
+        <div class="panel__actions">
+          <button id="btnReset" class="btn btn--ghost">Reset</button>
+          <div class="meta">
+            <div><span id="countShown">0</span> / <span id="countAll">0</span> data</div>
+            <div id="statusText" class="muted"></div>
           </div>
-          <div id="list" class="list"></div>
-        </div>
-      </aside>
-
-      <section class="mapwrap">
-        <div id="map" class="map"></div>
-
-        <!-- Overlay kecil untuk mobile agar UX enak -->
-        <div id="mobileHint" class="mobile-hint">
-          Geser peta • Tekan ☰ untuk panel • Tap marker untuk detail
         </div>
       </section>
-    </main>
 
-    <!-- Leaflet JS -->
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
+      <!-- RESULTS -->
+      <section class="results">
+        <div class="results__header">
+          <div class="results__title">Hasil</div>
+          <div class="muted">Klik item untuk zoom</div>
+        </div>
 
-    <!-- App JS (module) -->
-    <script type="module" src="./script.js"></script>
-  </body>
+        <div id="list" class="list" aria-label="Daftar hasil"></div>
+      </section>
+    </aside>
+
+    <!-- MAP -->
+    <section class="mapwrap" aria-label="Peta">
+      <div id="map" class="map"></div>
+      <div class="mobile-hint">Tekan ☰ untuk membuka panel</div>
+    </section>
+  </main>
+
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <!-- App JS (ES Module) -->
+  <script type="module" src="./script.js"></script>
+</body>
 </html>
